@@ -1,3 +1,5 @@
+// konsifgurasi APInya menggunakan cloudflare worker
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -14,8 +16,9 @@ export default {
       });
     }
 
-    // GET semua villa
+    // GET semua villa / mengambil data villa
     if (url.pathname === "/api/villa" && request.method === "GET") {
+      //menggunakan try catch untuk menangani error dan memudahkan debugging
       try {
         const { results } = await env.DB.prepare("SELECT * FROM villa").all();
         return new Response(JSON.stringify(results), {
@@ -33,7 +36,8 @@ export default {
       }
     }
 
-    // POST villa baru
+    // POST villa baru dan menambahkan data villa
+    // menggunakan try catch untuk menangani error dan memudahkan debugging
     if (url.pathname === "/api/villa" && request.method === "POST") {
       try {
         const { nama, harga, deskripsi } = await request.json();
@@ -54,7 +58,7 @@ export default {
       }
     }
 
-    // PUT update villa
+    // PUT update villa untuk mengupdate data villa
     if (url.pathname.startsWith("/api/villa/") && request.method === "PUT") {
       try {
         const id = url.pathname.split("/").pop();
@@ -76,7 +80,7 @@ export default {
       }
     }
 
-    // DELETE villa
+    // DELETE villa menghapus data villa
     if (url.pathname.startsWith("/api/villa/") && request.method === "DELETE") {
       try {
         const id = url.pathname.split("/").pop();
@@ -92,7 +96,7 @@ export default {
         });
       }
     }
-
+    // Jika tidak ada endpoint yang cocok, kembalikan 404 dengan pesan tidak ditemukan
     return new Response("Endpoint tidak ditemukan", {
       status: 404,
       headers: { "Access-Control-Allow-Origin": "*" },
