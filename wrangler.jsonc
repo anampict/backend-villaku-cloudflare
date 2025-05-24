@@ -11,7 +11,7 @@
     "enabled": true
   },
 
-  // ✅ Binding D1 Database
+  // konfigurasi database dari Cloudflare D1
   "d1_databases": [
     {
       "binding": "DB",
@@ -20,5 +20,5 @@
     }
   ]
 
-  // Jika kamu nanti ingin tambah "vars", "assets", dsb, bisa ditaruh di bawah sini.
+  // Jika ingin tambah "vars", "assets", dsb, bisa ditaruh di bawah sini.
 }
