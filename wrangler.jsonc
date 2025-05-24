@@ -11,7 +11,7 @@
     "enabled": true
   },
 
-  // konfigurasi database dari Cloudflare D1
+  // konfigurasi database dari Cloudflare D1 sqlite
   "d1_databases": [
     {
       "binding": "DB",
