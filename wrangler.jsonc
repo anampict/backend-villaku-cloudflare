@@ -7,11 +7,13 @@
   "name": "backend-villaku",
   "main": "src/index.js",
   "compatibility_date": "2025-05-15",
+  "assets": {
+    "directory": "../villaku/dist" // ✅ perbaiki path relatif
+  },
   "observability": {
     "enabled": true
   },
 
-  // konfigurasi database dari Cloudflare D1 sqlite
   "d1_databases": [
     {
       "binding": "DB",
@@ -19,6 +21,4 @@
       "database_id": "a0ebd2a5-0591-4e40-b60d-b6e983680e99"
     }
   ]
-
-  // Jika ingin tambah "vars", "assets", dsb, bisa ditaruh di bawah sini.
 }
