@@ -1,105 +1,73 @@
-// konsifgurasi APInya menggunakan cloudflare worker
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
+const app = new Hono();
 
-    // Handle preflight OPTIONS request
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
-    }
+// Middleware CORS agar bisa diakses dari Vue.js frontend
+app.use(
+  "/api/*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
+  })
+);
 
-    // GET semua villa / mengambil data villa
-    if (url.pathname === "/api/villa" && request.method === "GET") {
-      //menggunakan try catch untuk menangani error dan memudahkan debugging
-      try {
-        const { results } = await env.DB.prepare("SELECT * FROM villa").all();
-        return new Response(JSON.stringify(results), {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        });
-      } catch (err) {
-        return new Response("Gagal mengambil data villa: " + err.message, {
-          status: 500,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      }
-    }
+// Endpoint test
+app.get("/api", (c) => c.text("API Villa aktif"));
 
-    // POST villa baru dan menambahkan data villa
-    // menggunakan try catch untuk menangani error dan memudahkan debugging
-    if (url.pathname === "/api/villa" && request.method === "POST") {
-      try {
-        const { nama, harga, deskripsi } = await request.json();
-        await env.DB.prepare(
-          "INSERT INTO villa (nama, harga, deskripsi) VALUES (?, ?, ?)"
-        )
-          .bind(nama, harga, deskripsi)
-          .run();
-        return new Response("Villa berhasil ditambahkan", {
-          status: 201,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      } catch (err) {
-        return new Response("Gagal menambahkan villa: " + err.message, {
-          status: 500,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      }
-    }
+// Ambil semua villa
+app.get("/api/villa", async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare("SELECT * FROM villa").all();
+    return c.json(results);
+  } catch (err) {
+    return c.text("Gagal mengambil data villa: " + err.message, 500);
+  }
+});
 
-    // PUT update villa untuk mengupdate data villa
-    if (url.pathname.startsWith("/api/villa/") && request.method === "PUT") {
-      try {
-        const id = url.pathname.split("/").pop();
-        const { nama, harga, deskripsi } = await request.json();
-        await env.DB.prepare(
-          "UPDATE villa SET nama = ?, harga = ?, deskripsi = ? WHERE id = ?"
-        )
-          .bind(nama, harga, deskripsi, id)
-          .run();
-        return new Response("Villa berhasil diupdate", {
-          status: 200,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      } catch (err) {
-        return new Response("Gagal mengupdate villa: " + err.message, {
-          status: 500,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      }
-    }
+// Tambah villa baru
+app.post("/api/villa", async (c) => {
+  try {
+    const { nama, harga, deskripsi } = await c.req.json();
+    const stmt = c.env.DB.prepare(
+      "INSERT INTO villa (nama, harga, deskripsi) VALUES (?, ?, ?)"
+    );
+    const result = await stmt.bind(nama, harga, deskripsi).run();
+    return c.json({ message: "Villa berhasil ditambahkan", result }, 201);
+  } catch (err) {
+    return c.text("Gagal menambahkan villa: " + err.message, 500);
+  }
+});
 
-    // DELETE villa menghapus data villa
-    if (url.pathname.startsWith("/api/villa/") && request.method === "DELETE") {
-      try {
-        const id = url.pathname.split("/").pop();
-        await env.DB.prepare("DELETE FROM villa WHERE id = ?").bind(id).run();
-        return new Response("Villa berhasil dihapus", {
-          status: 200,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      } catch (err) {
-        return new Response("Gagal menghapus villa: " + err.message, {
-          status: 500,
-          headers: { "Access-Control-Allow-Origin": "*" },
-        });
-      }
-    }
-    // Jika tidak ada endpoint yang cocok, kembalikan 404 dengan pesan tidak ditemukan
-    return new Response("Endpoint tidak ditemukan", {
-      status: 404,
-      headers: { "Access-Control-Allow-Origin": "*" },
-    });
-  },
-};
+// Update villa
+app.put("/api/villa/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const { nama, harga, deskripsi } = await c.req.json();
+    const stmt = c.env.DB.prepare(
+      "UPDATE villa SET nama = ?, harga = ?, deskripsi = ? WHERE id = ?"
+    );
+    const result = await stmt.bind(nama, harga, deskripsi, id).run();
+    return c.json({ message: "Villa berhasil diupdate", result });
+  } catch (err) {
+    return c.text("Gagal mengupdate villa: " + err.message, 500);
+  }
+});
+
+// Hapus villa
+app.delete("/api/villa/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const stmt = c.env.DB.prepare("DELETE FROM villa WHERE id = ?");
+    const result = await stmt.bind(id).run();
+    return c.json({ message: "Villa berhasil dihapus", result });
+  } catch (err) {
+    return c.text("Gagal menghapus villa: " + err.message, 500);
+  }
+});
+
+// Jika ingin handle static file (jika deploy frontend bareng)
+app.get("*", (c) => c.env.ASSETS?.fetch(c.req.raw) ?? c.text("Not found", 404));
+
+export default app;
