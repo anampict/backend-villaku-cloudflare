@@ -16,7 +16,7 @@ app.use(
 // Endpoint test
 app.get("/api", (c) => c.text("API Villa aktif"));
 
-// Ambil semua villa
+// Ambil semua data villa
 app.get("/api/villa", async (c) => {
   try {
     const { results } = await c.env.DB.prepare("SELECT * FROM villa").all();
