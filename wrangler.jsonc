@@ -8,11 +8,12 @@
   "main": "src/index.js",
   "compatibility_date": "2025-05-15",
   "assets": {
-    "directory": "../villaku/dist" // ✅ perbaiki path relatif
+    "directory": "../villaku/dist"
   },
   "observability": {
     "enabled": true
   },
+  //konfigurasi untuk menghubungkan ke D1 database
 
   "d1_databases": [
     {
